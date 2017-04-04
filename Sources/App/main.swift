@@ -26,4 +26,42 @@ drop.get("test") { request in
     return try JSON(node: Acronym.all().makeNode())
 }
 
+drop.post("new") { request in
+    var acronym = try Acronym(node: request.json)
+    try acronym.save()
+    return acronym
+}
+
+drop.get("all") { request in
+    return try JSON(node: Acronym.all().makeNode())
+}
+
+drop.get("first") { request in
+    return try JSON(node: Acronym.query().first()?.makeNode())
+}
+
+drop.get("afks") { request in
+    return try JSON(node: Acronym.query().filter("short", "AFK").all().makeNode())
+}
+
+drop.get("not-afks") { request in
+    return try JSON(node: Acronym.query().filter("short", .notEquals,"AFK").all().makeNode())
+}
+//GET 0.0.0.0:8080/update?long=AwayFromFirst
+drop.get("update") { request in
+    guard var first = try Acronym.query().first(),
+        let long = request.data["long"]?.string else {
+            throw Abort.badRequest
+    }
+    first.long = long
+    try first.save()
+    return first
+}
+//GET 0.0.0.0:8080/delete-afks
+drop.get("delete-afks") { request in
+    let query = try Acronym.query().filter("short", "AFK")
+    try query.delete()
+    return try JSON(node: Acronym.all().makeNode())
+}
+
 drop.run()
